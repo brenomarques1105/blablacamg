@@ -1,0 +1,353 @@
+{
+  "name": "My workflow 6",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Descreva sua carona se é ida ou volta, o dia, horario, sua rua e bairro ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Pra onde você quer ir?",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "773dbb63-360f-4e8d-abe5-9ad0aea6928f",
+      "name": "On form submission",
+      "webhookId": "bafcc41f-2bfb-45e0-8e89-667e3ade675f"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é o assistente inteligente de caronas da Cidade Administrativa de MG (CAMG).\n\nDADOS DO PASSAGEIRO:\n\n- Bairro:{{ $('Information Extractor').item.json.output.bairro }}\n- Rua: {{ $('Information Extractor').item.json.output.rua }}\n- Data desejada: {{ $('Information Extractor').item.json.output.dia }}\n- Horário desejado: {{ $('Information Extractor').item.json.output.horario }}\n\nCARONAS DISPONÍVEIS NO BANCO DE DADOS: {{ JSON.stringify($('Code in JavaScript').item.json.caronas_disponiveis, null, 2) }}\n\n\nDados dos motoristas para você pegar o tefefone: {{ JSON.stringify($json.lista_usuarios, null, 2) }}\nSua tarefa:\n1. Analise a lista de caronas disponíveis no banco de dados.\n2. Filtre apenas as caronas que acontecem na mesma DATA solicitada pelo passageiro.\n3. Avalie a geografia: veja qual motorista passa pelo mesmo BAIRRO do passageiro ou cuja ROTA PRINCIPAL passe estrategicamente perto (use seu conhecimento geográfico de Belo Horizonte).\n4. Avalie o horário: o horário de saída do motorista deve ter no máximo 45 minutos de diferença do horário desejado pelo passageiro.\n5. Escolha a melhor opção. Se houver mais de uma opção pode sugerir mais de uma.\n6. Escreva uma mensagem final amigável e direta para o passageiro, informando: o nome do motorista escolhido, o bairro de origem dele, a rota que ele vai fazer, e o horário aproximado de encontro e o número de telefone do(s) motoristas.\n7. Se não houver NENHUMA opção viável para a data e rota, peça desculpas educadamente e diga que não há motoristas para esse trajeto no momento.\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1504,
+        -48
+      ],
+      "id": "1176f3d8-2ecb-4646-afcf-607f7acdcbdb",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-6.1-sol",
+          "mode": "list",
+          "cachedResultName": "gpt-6.1-sol"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1552,
+        128
+      ],
+      "id": "1ff3ff8a-b0af-41a7-a42f-57aeebe35d10",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json['Pra onde você quer ir?'] }}"
+            },
+            {
+              "role": "system",
+              "content": "Você é um assistente especialista em extração de dados espaciais para um aplicativo de caronas corporativas em Belo Horizonte. \nSua única função é ler a mensagem do usuário e extrair os dados de endereço e o horário desejado.\n\nVocê DEVE retornar APENAS um objeto JSON válido, sem formatação markdown (sem ```json), sem explicações adicionais e sem texto antes ou depois.\n\nUtilize exatamente a seguinte estrutura de chaves:\n{\n  \"bairro\": \"nome do bairro ou null se não informado\",\n  \"rua\": \"nome da rua/avenida ou null se não informado\",\n  \"numero\": \"numero do local ou null se não informado\",\n  \"horario\": \"horário no formato HH:MM ou null se não informado\"\n}\n\nRegras:\n- Se o usuário mencionar \"ir para\", considere como destino.\n- Padronize os nomes dos bairros de Belo Horizonte (ex: \"caiçara\" vira \"Caiçara\").\n- Converta horários informais para o formato HH:MM (ex: \"8 da manha\" vira \"08:00\", \"meio dia\" vira \"12:00\")."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        -720
+      ],
+      "id": "774b7247-2ee1-4b0a-8bc0-a1fcd6275119",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json['Pra onde você quer ir?'] }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "rua",
+              "description": "Nome da rua ou avenida"
+            },
+            {
+              "name": "numero",
+              "description": "Número do local"
+            },
+            {
+              "name": "bairro",
+              "description": "Nome do bairro "
+            },
+            {
+              "name": "horario",
+              "description": "Horário desejado convertido para o formato HH:MM"
+            },
+            {
+              "name": "dia",
+              "description": "dia desejado da carona"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        16
+      ],
+      "id": "4bb2f375-7e6d-4ea4-bd89-713abf13113b",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        272
+      ],
+      "id": "0aa06f05-ec84-4a49-9563-811ef4f9f7ff",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "caronas",
+        "limit": 1000000,
+        "filters": {
+          "conditions": []
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        624,
+        80
+      ],
+      "id": "e42b7260-ecc0-4720-9f5e-cf701a56c254",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "deSr1gkg5e7VzNCc",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nreturn [{ \n  json: { \n    caronas_disponiveis: $input.all().map(item => item.json) \n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        80
+      ],
+      "id": "68d6e1b5-4c39-492b-bcb1-f0afdfa83f29",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "usuarios",
+        "limit": 100000
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        80
+      ],
+      "id": "f2158b3c-8a0a-46cf-a543-b775e84a1497",
+      "name": "Get many rows1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "deSr1gkg5e7VzNCc",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ \n  json: { \n    lista_usuarios: $input.all().map(item => item.json) \n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        80
+      ],
+      "id": "f6df17ab-edd8-4f3d-ba60-c2910d617cc9",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        []
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get many rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b42893b3-ad2a-48ff-a1ae-c7cc4dcfebe8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6e4fe9e42aaa273bec362ca346b8dfe376665a2dba8f97f4459d445574574234"
+  },
+  "nodeGroups": [],
+  "id": "wSD5oGVa4OtwDTW6",
+  "tags": []
+}
