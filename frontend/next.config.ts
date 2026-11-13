@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Keep production checks from overwriting files used by the open dev server.
-  distDir: process.env.NODE_ENV === "production" ? ".next-production" : ".next",
+  // Vercel expects the standard .next output. Keep local production builds separate.
+  distDir: process.env.NODE_ENV === "production" && process.env.VERCEL !== "1"
+    ? ".next-production"
+    : ".next",
   async headers() {
     return [{ source: "/:path*", headers: [
       { key: "X-Content-Type-Options", value: "nosniff" },

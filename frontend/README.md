@@ -23,7 +23,7 @@ O assistente usa `N8N_WEBHOOK_AUTH_TOKEN` como cabeçalho `X-Webhook-Secret` qua
 
 - `npm run lint`, `npm run typecheck` e `npm test` verificam o código e os casos de redirecionamento, telefones e fuso horário.
 - `npm run build` gera a versão de produção; `npm start` a executa.
-- A produção usa `.next-production`; o servidor de desenvolvimento usa `.next`, permitindo compilar sem sobrescrever seus arquivos.
+- O build na Vercel usa `.next`. Localmente, o build de produção usa `.next-production` para preservar os arquivos do servidor de desenvolvimento.
 - A revisão local passou no lint, TypeScript e cinco testes. A compilação concluiu a etapa de código, mas a geração estática foi bloqueada por `EPERM` ao criar diretórios no ambiente restrito; execute `npm run build` no PowerShell local para validar a geração final.
 - A seleção semanal permite marcar várias datas ou selecionar os dias de segunda a sexta; a publicação continua sendo um único bulk insert em `caronas`.
 - O projeto usa Webpack nos comandos de desenvolvimento e build para evitar uma falha de criação de subprocessos do Turbopack observada neste ambiente Windows.
