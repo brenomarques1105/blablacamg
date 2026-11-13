@@ -90,7 +90,7 @@ Armazena as ofertas de viagens ativas. Cada linha representa UMA viagem em um di
 ## 6. Decisões de implementação do frontend (aprovadas em 12/11/2026)
 
 * **Stack selecionada:** Next.js App Router, TypeScript e Tailwind CSS. Não usar Vite.
-* **Autenticação:** todos os usuários, inclusive passageiros, devem entrar na conta antes de consultar caronas ou usar o assistente. Passageiros usam Supabase Auth sem linha em `usuarios`; `usuarios` continua representando motoristas.
+* **Autenticação:** a mesma conta autenticada pode consultar e oferecer caronas e usar o assistente. O cadastro não exige escolher um perfil. A linha em `usuarios` guarda os dados de contato de quem oferece carona.
 * **Vínculo e autorização:** para motoristas, `usuarios.id` deve ser igual ao UUID do usuário autenticado e `caronas.motorista_id` deve corresponder a esse UUID. Aplicar autorização com RLS, sem acrescentar colunas.
 * **Segredos:** não usar `service_role` no navegador. A chamada ao n8n passa por uma rota server-side do Next.js (`/api/assistente`), com a URL em `N8N_WEBHOOK_URL` (sem prefixo `NEXT_PUBLIC_`).
 * **Contrato n8n confirmado:** POST JSON com `tipo_trajeto` (`Ida` ou `Volta`) e `mensagem`; resposta JSON com `text`.

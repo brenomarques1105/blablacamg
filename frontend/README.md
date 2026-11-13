@@ -16,7 +16,7 @@ O assistente usa `N8N_WEBHOOK_AUTH_TOKEN` como cabeçalho `X-Webhook-Secret` qua
 - As tabelas `usuarios` e `caronas` devem existir conforme o esquema documentado em `../agents.md`.
 - Aplique o SQL de políticas em `../supabase/migrations/20261112000000_blablacamg_rls.sql` no SQL Editor do Supabase.
 - Configure o redirecionamento de confirmação de e-mail do Supabase para `http://localhost:3005/auth/callback` durante o desenvolvimento.
-- Motoristas usam `usuarios.id = auth.users.id`; passageiros usam Supabase Auth sem linha na tabela `usuarios`.
+- Cada conta pode consultar e oferecer caronas. Os dados de contato são salvos ao publicar a primeira oferta, com `usuarios.id = auth.users.id`.
 - Não coloque `service_role`, segredo do n8n ou `.env.local` no repositório.
 
 ## Revisão e execução

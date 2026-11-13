@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CarFront,
@@ -114,9 +115,7 @@ export function AppShell({
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <span className="grid size-10 place-items-center rounded-2xl bg-[#e6f4eb] text-emerald-800">
-        <CarFront size={23} />
-      </span>
+      <Image src="/blablacamg-mark.webp" alt="" width={40} height={40} unoptimized className="rounded-xl" />
       <span className="text-lg font-extrabold tracking-tight">
         Blabla<span className="text-emerald-700">CAMG</span>
       </span>

@@ -18,20 +18,24 @@ import { weekDates } from "@/lib/ride-dates";
 const CAMG = "CAMG";
 const CAMG_DESTINATION = "Cidade Administrativa (CAMG)";
 
-export function RideForm({ initialProfile }: { initialProfile: Usuario | null }) {
+export function RideForm({ initialProfile }: { initialProfile: Pick<Usuario, "nome" | "orgao" | "telefone"> }) {
   const router = useRouter();
   const [tipo, setTipo] = useState<TipoTrajeto>("Ida");
   const [bairroOrigem, setBairroOrigem] = useState("");
   const [destino, setDestino] = useState(CAMG_DESTINATION);
   const [rota, setRota] = useState("");
-  const [horario, setHorario] = useState("07:30");
+  const [horarios, setHorarios] = useState<Record<TipoTrajeto, string>>({
+    Ida: "07:30",
+    Volta: "17:00",
+  });
+  const horario = horarios[tipo];
   const [vagas, setVagas] = useState("3");
   const [dates, setDates] = useState<string[]>([]);
   const [dateToAdd, setDateToAdd] = useState("");
   const [weekStart, setWeekStart] = useState(todayInSaoPaulo);
-  const [nome, setNome] = useState(initialProfile?.nome ?? "");
-  const [orgao, setOrgao] = useState(initialProfile?.orgao ?? "");
-  const [telefone, setTelefone] = useState(initialProfile?.telefone ?? "");
+  const [nome, setNome] = useState(initialProfile.nome);
+  const [orgao, setOrgao] = useState(initialProfile.orgao);
+  const [telefone, setTelefone] = useState(initialProfile.telefone ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -141,22 +145,22 @@ export function RideForm({ initialProfile }: { initialProfile: Usuario | null })
     <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-6">
         <section className="rounded-3xl border border-[var(--line)] bg-white p-5 sm:p-7">
-          <StepNumber number="1" title="Quem vai dirigir?" />
+          <StepNumber number="1" title="Contato da carona" />
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <Field
+            {!initialProfile.nome && <Field
               label="Nome do motorista"
               value={nome}
               onChange={setNome}
               placeholder="Seu nome"
               required
-            />
-            <Field
+            />}
+            {!initialProfile.orgao && <Field
               label="Órgão"
               value={orgao}
               onChange={setOrgao}
               placeholder="Ex.: SEPLAG"
               required
-            />
+            />}
             <div className="sm:col-span-2">
               <Field
                 label="Telefone com DDD"
@@ -270,7 +274,10 @@ export function RideForm({ initialProfile }: { initialProfile: Usuario | null })
                 type="time"
                 required
                 value={horario}
-                onChange={(event) => setHorario(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setHorarios((current) => ({ ...current, [tipo]: value }));
+                }}
                 className="h-12 w-full rounded-xl border border-[var(--line)] px-3 outline-none focus:border-emerald-700"
               />
             </div>

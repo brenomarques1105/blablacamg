@@ -2,10 +2,10 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  CarFront,
   Eye,
   EyeOff,
   LoaderCircle,
@@ -13,13 +13,12 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { safeNextPath } from "@/lib/navigation";
+import { whatsappPhone } from "@/lib/format";
 
 type Mode = "login" | "signup";
-type DriverProfile = { nome: string; orgao: string; telefone: string };
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
-  const [profile, setProfile] = useState<"passageiro" | "motorista">("passageiro");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -62,37 +61,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
         throw new Error("Use uma senha com pelo menos 8 caracteres.");
       }
 
-      const metadata: Record<string, string> = { perfil: profile };
-      let driverProfile: DriverProfile | null = null;
-      if (profile === "motorista") {
-        const nome = String(form.get("nome") ?? "").trim();
-        const orgao = String(form.get("orgao") ?? "").trim();
-        const telefone = String(form.get("telefone") ?? "").replace(/\D/g, "");
+      const nome = String(form.get("nome") ?? "").trim();
+      const orgao = String(form.get("orgao") ?? "").trim();
+      if (!nome || !orgao) throw new Error("Informe seu nome e órgão.");
 
-        if (!nome || !orgao || telefone.length < 10 || telefone.length > 11) {
-          throw new Error("Preencha nome, órgão e telefone com DDD para continuar.");
-        }
-        Object.assign(metadata, { nome, orgao, telefone });
-        driverProfile = { nome, orgao, telefone };
-      }
+      const phone = whatsappPhone(String(form.get("telefone") ?? ""));
+      if (!phone) throw new Error("Informe um telefone com DDD.");
 
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: metadata,
+          data: { nome, orgao, telefone: phone.slice(2) },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (authError) throw authError;
 
       if (data.session) {
-        if (driverProfile && data.user) {
-          const { error: profileError } = await supabase
-            .from("usuarios")
-            .upsert({ id: data.user.id, ...driverProfile }, { onConflict: "id" });
-          if (profileError) throw profileError;
-        }
         router.replace("/");
         router.refresh();
         return;
@@ -109,9 +95,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="w-full max-w-md">
       <Link href="/" className="mb-8 flex items-center gap-3">
-        <span className="grid size-11 place-items-center rounded-2xl bg-[#dff1e6] text-emerald-900">
-          <CarFront size={24} />
-        </span>
+        <Image src="/blablacamg-mark.webp" alt="" width={44} height={44} unoptimized className="rounded-xl" />
         <span className="text-xl font-extrabold">
           Blabla<span className="text-emerald-700">CAMG</span>
         </span>
@@ -132,43 +116,17 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </p>
         </div>
 
+        {!isSignup && (
+          <p className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950">
+            <strong>Exclusivo para servidores.</strong> Somente são permitidos e-mails institucionais.
+          </p>
+        )}
+
         <form onSubmit={submit} className="space-y-4">
           {isSignup && (
-            <div>
-              <span className="mb-2 block text-sm font-semibold">
-                Como pretende usar o BlablaCAMG?
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {(["passageiro", "motorista"] as const).map((item) => (
-                  <button
-                    aria-pressed={profile === item}
-                    type="button"
-                    key={item}
-                    onClick={() => setProfile(item)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-semibold capitalize ${
-                      profile === item
-                        ? "border-emerald-700 bg-emerald-50 text-emerald-900"
-                        : "border-[var(--line)] text-slate-600"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isSignup && profile === "motorista" && (
             <>
-              <Field label="Nome" name="nome" placeholder="Seu nome" required />
-              <Field label="Órgão" name="orgao" placeholder="Ex.: SEPLAG" required />
-              <Field
-                label="Telefone com DDD"
-                name="telefone"
-                inputMode="tel"
-                placeholder="31999999999"
-                required
-              />
+              <Field label="Nome completo" name="nome" autoComplete="name" required />
+              <Field label="Órgão" name="orgao" autoComplete="organization" placeholder="Ex.: SEPLAG" required />
             </>
           )}
 
@@ -180,6 +138,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
             required
             autoComplete="email"
           />
+
+          {isSignup && (
+            <div>
+              <Field label="Telefone com DDD" name="telefone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(31) 99999-9999" required />
+              <p className="mt-1 text-xs text-[var(--muted)]">
+                Você poderá revisar este número ao oferecer uma carona.
+              </p>
+            </div>
+          )}
 
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-semibold">

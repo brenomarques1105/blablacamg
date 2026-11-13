@@ -1,11 +1,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  CarFront,
   CircleHelp,
-  MapPin,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AssistantWidget } from "@/components/assistant-widget";
@@ -71,56 +68,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   return (
     <AppShell userName={user.user_metadata?.nome ?? user.email ?? "Servidor"}>
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-7 sm:py-9">
-        <section className="relative overflow-hidden rounded-[2rem] bg-[#123f30] px-6 py-8 text-white sm:px-10 sm:py-10">
-          <div className="absolute -right-12 -top-24 size-72 rounded-full border-[36px] border-white/5" />
-          <div className="absolute -bottom-32 right-36 size-64 rounded-full bg-emerald-400/10 blur-2xl" />
-          <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-emerald-100">
-                <MapPin size={14} /> CIDADE ADMINISTRATIVA · MG
-              </span>
-              <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
-                O caminho fica melhor{" "}
-                <span className="text-emerald-300">compartilhado.</span>
+        <section aria-labelledby="ride-board-title">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 id="ride-board-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Caronas disponíveis
               </h1>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-emerald-50/80 sm:text-base">
-                Encontre uma carona com quem já vai para o mesmo lado. Mais conexão entre
-                servidores, menos carros no caminho.
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Encontre as próximas caronas de ida e volta da CAMG.
               </p>
             </div>
             <Link
               href="/caronas/nova"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#c4f36c] px-5 font-bold text-[#163b2d] transition hover:bg-[#d5ff8b]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#174b38] px-5 font-bold text-white hover:bg-[#103b2b]"
             >
               Oferecer carona <ArrowRight size={17} />
             </Link>
-          </div>
-          <div className="relative mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/15 pt-5 text-xs text-emerald-50/75">
-            <span className="inline-flex items-center gap-2">
-              <ShieldCheck size={15} /> Acesso autenticado para todos
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <Sparkles size={15} /> Assistente inteligente de rotas
-            </span>
-          </div>
-        </section>
-
-        <section className="mt-9">
-          <div className="mb-5 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-800">
-                Comunidade CAMG
-              </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-                Caronas disponíveis
-              </h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                Veja as próximas viagens oferecidas por servidores.
-              </p>
-            </div>
-            <span className="hidden items-center gap-1.5 pb-1 text-xs text-[var(--muted)] sm:flex">
-              <CarFront size={16} /> Ida e volta
-            </span>
           </div>
           {error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800">

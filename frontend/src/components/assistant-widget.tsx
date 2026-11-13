@@ -1,15 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import {
-  Bot,
   CarFront,
   Check,
   LoaderCircle,
   MapPin,
   MessageCircle,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat-markdown";
@@ -19,7 +18,7 @@ import type { TipoTrajeto } from "@/lib/database.types";
 type Message = { role: "assistant" | "user"; text: string };
 
 const welcomeMessage =
-  "Oi! Sou o assistente de caronas da CAMG. Me conte de onde você sai, em qual dia e horário.\n\nEx.: *Preciso ir amanhã saindo do Caiçara perto das 07:40.*";
+  "Opa, sou o Tião da CAMG, seu assistente de caronas! Me conta de onde você sai, em que dia e mais ou menos que horas. Vou procurar uma carona pra você.\n\nEx.: *Preciso ir amanhã saindo do Caiçara perto das 07:40.*";
 
 export function AssistantWidget() {
   const [open, setOpen] = useState(false);
@@ -29,6 +28,10 @@ export function AssistantWidget() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: welcomeMessage },
   ]);
+  const [historyByType, setHistoryByType] = useState<Record<TipoTrajeto, Message[]>>({
+    Ida: [],
+    Volta: [],
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -54,13 +57,25 @@ export function AssistantWidget() {
       const response = await fetch("/api/assistente", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo_trajeto: tipo, mensagem: prompt }),
+        body: JSON.stringify({
+          tipo_trajeto: tipo,
+          mensagem: prompt,
+          historico: historyByType[tipo],
+        }),
       });
-      const result = (await response.json()) as { text?: string; error?: string };
-      if (!response.ok || !result.text) {
+      const result = (await response.json()) as { text?: string; error?: string; mensagemContexto?: string };
+      const reply = result.text;
+      if (!response.ok || !reply) {
         throw new Error(result.error ?? "Não consegui encontrar uma resposta agora.");
       }
-      setMessages((current) => [...current, { role: "assistant", text: result.text! }]);
+      setMessages((current) => [...current, { role: "assistant", text: reply }]);
+      setHistoryByType((current) => {
+        const turn: Message[] = [
+          { role: "user", text: (result.mensagemContexto ?? prompt).slice(0, 500) },
+          { role: "assistant", text: reply.slice(0, 500) },
+        ];
+        return { ...current, [tipo]: [...current[tipo], ...turn].slice(-8) };
+      });
     } catch (cause) {
       setMessages((current) => [
         ...current,
@@ -92,13 +107,10 @@ export function AssistantWidget() {
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-5 right-5 z-30 inline-flex h-14 items-center gap-3 rounded-full bg-[#174b38] px-5 text-sm font-bold text-white shadow-xl shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#103b2b]"
-        aria-label="Abrir assistente de caronas"
+        aria-label="Falar com o Tião da CAMG"
       >
-        <span className="grid size-8 place-items-center rounded-full bg-white/15">
-          <Sparkles size={17} />
-        </span>
-        <span className="hidden sm:inline">Assistente IA de Caronas</span>
-        <span className="sm:hidden">Assistente IA</span>
+        <Image src="/tiao-da-camg.webp" alt="" width={36} height={36} unoptimized className="rounded-full bg-white/15 object-contain" />
+        <span>Tião da CAMG</span>
       </button>
     );
   }
@@ -107,18 +119,16 @@ export function AssistantWidget() {
     <section
       role="dialog"
       onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}
-      aria-label="Assistente IA de Caronas"
+      aria-label="Tião da CAMG, assistente de caronas"
       className="fixed bottom-4 right-3 z-40 flex h-[min(690px,calc(100dvh-2rem))] w-[min(430px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[1.75rem] border border-[#d9e6dd] bg-white shadow-2xl shadow-emerald-950/20 sm:bottom-6 sm:right-6"
     >
       <header className="flex items-center justify-between bg-[#174b38] px-5 py-4 text-white">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-white/15">
-            <Bot size={21} />
-          </span>
+          <Image src="/tiao-da-camg.webp" alt="" width={48} height={48} unoptimized className="rounded-full bg-white/15 object-contain" />
           <div>
-            <p className="font-bold">Assistente de Caronas</p>
+            <p className="font-bold">Tião da CAMG</p>
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-emerald-100">
-              <span className="size-1.5 rounded-full bg-[#c4f36c]" /> Online para ajudar
+              Assistente de caronas
             </p>
           </div>
         </div>
