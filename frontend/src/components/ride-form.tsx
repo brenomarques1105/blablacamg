@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { estimateRideDistance, formatSuggestedPrice } from "@/lib/ride-price";
 import type { TipoTrajeto, Usuario } from "@/lib/database.types";
 import { todayInSaoPaulo } from "@/lib/format";
 import { weekDates } from "@/lib/ride-dates";
@@ -101,6 +102,8 @@ export function RideForm({ initialProfile }: { initialProfile: Pick<Usuario, "no
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Sua sessão expirou. Entre novamente.");
 
+      const distance = await estimateRideDistance(bairroOrigem.trim(), destino.trim());
+
       const { error: profileError } = await supabase
         .from("usuarios")
         .upsert(
@@ -123,11 +126,12 @@ export function RideForm({ initialProfile }: { initialProfile: Pick<Usuario, "no
         data_carona: date,
         horario_saida: horario,
         vagas: seatCount,
+        distancia_estimada_metros: distance,
       }));
       const { error: insertError } = await supabase.from("caronas").insert(rows);
       if (insertError) throw insertError;
 
-      setSuccess(`${rows.length} ${rows.length === 1 ? "carona cadastrada" : "caronas cadastradas"} com sucesso.`);
+      setSuccess(`${rows.length} ${rows.length === 1 ? "carona cadastrada" : "caronas cadastradas"} com sucesso. O preço sugerido da carona até o destino é ${formatSuggestedPrice(distance)}.`);
       setDates([]);
       router.refresh();
     } catch (cause) {

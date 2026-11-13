@@ -3,7 +3,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Eye,
@@ -18,7 +17,6 @@ import { whatsappPhone } from "@/lib/format";
 type Mode = "login" | "signup";
 
 export function AuthForm({ mode }: { mode: Mode }) {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,16 +42,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
     try {
       const supabase = createClient();
       if (!isSignup) {
-        const { error: authError } = await supabase.auth.signInWithPassword({
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (authError) throw authError;
+        if (!data.session) throw new Error("Não foi possível iniciar a sessão. Tente entrar novamente.");
 
         const next = new URLSearchParams(window.location.search).get("next");
         const destination = safeNextPath(next);
-        router.replace(destination);
-        router.refresh();
+        window.location.replace(destination);
         return;
       }
 
@@ -79,8 +77,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       if (authError) throw authError;
 
       if (data.session) {
-        router.replace("/");
-        router.refresh();
+        window.location.replace("/");
         return;
       }
 
@@ -95,8 +92,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="w-full max-w-md">
       <Link href="/" className="mb-8 flex items-center gap-3">
-        <Image src="/blablacamg-mark.webp" alt="" width={44} height={44} unoptimized className="rounded-xl" />
-        <span className="text-xl font-extrabold">
+        <Image src="/blablacamg-mark.webp" alt="" width={72} height={72} unoptimized className="shrink-0 rounded-xl" />
+        <span className="text-2xl font-extrabold">
           Blabla<span className="text-emerald-700">CAMG</span>
         </span>
       </Link>

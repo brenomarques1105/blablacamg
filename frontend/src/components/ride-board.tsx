@@ -6,12 +6,14 @@ import {
   CalendarDays,
   CarFront,
   MapPin,
-  MessageCircle,
   MoveRight,
   Users,
 } from "lucide-react";
 import type { CaronaComMotorista, TipoTrajeto } from "@/lib/database.types";
 import { whatsappPhone } from "@/lib/format";
+import { RideEstimate } from "@/components/ride-estimate";
+import { RideWhatsApp } from "@/components/ride-whatsapp";
+import { formatSuggestedPrice } from "@/lib/ride-price";
 
 export function RideBoard({ rides, tipo, date, page, total, pageSize }: {
   rides: CaronaComMotorista[]; tipo: "Todas" | TipoTrajeto; date: string; page: number; total: number; pageSize: number;
@@ -96,11 +98,9 @@ export function RideBoard({ rides, tipo, date, page, total, pageSize }: {
 
 function RideCard({ ride }: { ride: CaronaComMotorista }) {
   const phone = whatsappPhone(ride.usuarios?.telefone ?? "");
-  const whatsapp = phone
-    ? `https://wa.me/${phone}?text=${encodeURIComponent(
-        `Olá, ${ride.usuarios?.nome}! Vi sua carona de ${ride.data_carona.split("-").reverse().join("/")} às ${ride.horario_saida.slice(0, 5)}, de ${ride.bairro_origem} para ${ride.destino}, no BlablaCAMG e gostaria de combinar os detalhes.`,
-      )}`
-    : null;
+  const distance = ride.distancia_estimada_metros;
+  const price = distance == null ? null : formatSuggestedPrice(distance);
+  const message = `Olá, ${ride.usuarios?.nome ?? "motorista"}! Vi sua carona de ${ride.data_carona.split("-").reverse().join("/")} às ${ride.horario_saida.slice(0, 5)} no BlablaCAMG e gostaria de combinar os detalhes.`;
   const date = new Date(`${ride.data_carona}T12:00:00`).toLocaleDateString("pt-BR", {
     weekday: "short",
     day: "2-digit",
@@ -148,21 +148,20 @@ function RideCard({ ride }: { ride: CaronaComMotorista }) {
       <p className="mt-3 pl-7 text-xs leading-5 text-[var(--muted)]">
         Rota: {ride.rota_principal}
       </p>
+      {price ? (
+        <p className="mt-3 text-sm text-emerald-900">
+          <strong>{price} sugeridos</strong> para o trajeto completo
+          <span className="block text-xs text-slate-600">Distância estimada por IA · R$ 0,80/km</span>
+        </p>
+      ) : ride.destino && <RideEstimate origin={ride.bairro_origem} destination={ride.destino} />}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
           <Users size={15} />
           {ride.vagas} {ride.vagas === 1 ? "vaga" : "vagas"}
         </span>
-        {whatsapp ? (
-          <a
-            href={whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#137a50] px-4 text-sm font-bold text-white transition hover:bg-[#105e3e]"
-          >
-            <MessageCircle size={16} /> Chamar no WhatsApp
-          </a>
+        {phone ? (
+          <RideWhatsApp phone={phone} message={message} origin={ride.bairro_origem} destination={ride.destino ?? ""} />
         ) : (
           <span className="text-xs text-slate-500">Telefone indisponível</span>
         )}

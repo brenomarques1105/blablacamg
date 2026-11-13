@@ -26,6 +26,7 @@ export type Carona = {
   horario_saida: string;
   vagas: number;
   ativa: boolean;
+  distancia_estimada_metros: number | null;
 };
 
 export type CaronaComMotorista = Carona & {
@@ -43,10 +44,11 @@ export type Database = {
       };
       caronas: {
         Row: Carona;
-        Insert: Omit<Carona, "id" | "ativa" | "vagas"> & {
+        Insert: Omit<Carona, "id" | "ativa" | "vagas" | "distancia_estimada_metros"> & {
           id?: string;
           ativa?: boolean;
           vagas?: number;
+          distancia_estimada_metros?: number | null;
         };
         Update: Partial<Carona>;
         Relationships: [

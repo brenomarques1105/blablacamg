@@ -12,10 +12,12 @@ import {
   X,
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat-markdown";
+import { RideEstimate } from "@/components/ride-estimate";
 import { extractPhones } from "@/lib/format";
 import type { TipoTrajeto } from "@/lib/database.types";
 
-type Message = { role: "assistant" | "user"; text: string };
+type PassengerSegment = { origem: string; destino: string };
+type Message = { role: "assistant" | "user"; text: string; segment?: PassengerSegment };
 
 const welcomeMessage =
   "Opa, sou o Tião da CAMG, seu assistente de caronas! Me conta de onde você sai, em que dia e mais ou menos que horas. Vou procurar uma carona pra você.\n\nEx.: *Preciso ir amanhã saindo do Caiçara perto das 07:40.*";
@@ -63,12 +65,12 @@ export function AssistantWidget() {
           historico: historyByType[tipo],
         }),
       });
-      const result = (await response.json()) as { text?: string; error?: string; mensagemContexto?: string };
+      const result = (await response.json()) as { text?: string; error?: string; mensagemContexto?: string; trechoPassageiro?: PassengerSegment };
       const reply = result.text;
       if (!response.ok || !reply) {
         throw new Error(result.error ?? "Não consegui encontrar uma resposta agora.");
       }
-      setMessages((current) => [...current, { role: "assistant", text: reply }]);
+      setMessages((current) => [...current, { role: "assistant", text: reply, segment: result.trechoPassageiro }]);
       setHistoryByType((current) => {
         const turn: Message[] = [
           { role: "user", text: (result.mensagemContexto ?? prompt).slice(0, 500) },
@@ -106,10 +108,10 @@ export function AssistantWidget() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-30 inline-flex h-14 items-center gap-3 rounded-full bg-[#174b38] px-5 text-sm font-bold text-white shadow-xl shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#103b2b]"
+        className="fixed bottom-5 right-5 z-30 inline-flex h-[76px] items-center gap-3 rounded-full bg-[#174b38] pl-3 pr-5 text-sm font-bold text-white shadow-xl shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#103b2b]"
         aria-label="Falar com o Tião da CAMG"
       >
-        <Image src="/tiao-da-camg.webp" alt="" width={36} height={36} unoptimized className="rounded-full bg-white/15 object-contain" />
+        <Image src="/tiao-da-camg.webp" alt="" width={60} height={60} unoptimized className="shrink-0 rounded-full bg-white/15 object-contain" />
         <span>Tião da CAMG</span>
       </button>
     );
@@ -124,7 +126,7 @@ export function AssistantWidget() {
     >
       <header className="flex items-center justify-between bg-[#174b38] px-5 py-4 text-white">
         <div className="flex items-center gap-3">
-          <Image src="/tiao-da-camg.webp" alt="" width={48} height={48} unoptimized className="rounded-full bg-white/15 object-contain" />
+          <Image src="/tiao-da-camg.webp" alt="" width={72} height={72} unoptimized className="shrink-0 rounded-full bg-white/15 object-contain" />
           <div>
             <p className="font-bold">Tião da CAMG</p>
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-emerald-100">
@@ -188,6 +190,9 @@ export function AssistantWidget() {
               <div className="chat-markdown">
                 {item.role === "assistant" ? <ChatMarkdown text={item.text} /> : <p className="whitespace-pre-wrap">{item.text}</p>}
               </div>
+              {item.segment && (
+                <RideEstimate origin={item.segment.origem} destination={item.segment.destino} />
+              )}
               {item.role === "assistant" &&
                 index > 0 &&
                 extractPhones(item.text).length > 0 && (

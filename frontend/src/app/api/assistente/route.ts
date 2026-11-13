@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveAssistantDates } from "@/lib/assistant-dates";
+import { estimateDistanceMeters } from "@/lib/estimate-distance.server";
+import { formatSuggestedPrice } from "@/lib/ride-price";
 
 const validTypes = new Set(["Ida", "Volta"]);
 
@@ -58,7 +60,24 @@ export async function POST(request: Request) {
     const result: unknown = await response.json();
     const text = result && typeof result === "object" && "text" in result && typeof result.text === "string" ? result.text.trim() : "";
     if (!text) return NextResponse.json({ error: "O assistente retornou uma resposta vazia." }, { status: 502 });
-    return NextResponse.json({ text, mensagemContexto });
+    const trecho = result && typeof result === "object" && "trecho_passageiro" in result
+      ? result.trecho_passageiro
+      : null;
+    const trechoPassageiro = trecho && typeof trecho === "object"
+      && "origem" in trecho && typeof trecho.origem === "string" && trecho.origem.trim() && trecho.origem.length <= 150
+      && "destino" in trecho && typeof trecho.destino === "string" && trecho.destino.trim() && trecho.destino.length <= 150
+      ? { origem: trecho.origem.trim(), destino: trecho.destino.trim() }
+      : undefined;
+    if (trechoPassageiro) {
+      const estimate = await estimateDistanceMeters(trechoPassageiro.origem, trechoPassageiro.destino);
+      if ("meters" in estimate && estimate.meters !== undefined) {
+        const km = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(estimate.meters / 1000);
+        const price = formatSuggestedPrice(estimate.meters);
+        const note = `**Valor sugerido: ${price}.** É uma estimativa com base na quilometragem do seu trecho (aprox. ${km} km a R$ 0,80/km).`;
+        return NextResponse.json({ text: `${text}\n\n${note}`, mensagemContexto });
+      }
+    }
+    return NextResponse.json({ text, mensagemContexto, trechoPassageiro });
   } catch {
     return NextResponse.json({ error: "Não foi possível conectar ao assistente. Tente novamente." }, { status: 502 });
   }

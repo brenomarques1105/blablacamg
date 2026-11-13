@@ -77,7 +77,7 @@ export function AppShell({
 
       <div className="min-w-0">
         {signOutError && <p role="alert" className="bg-rose-50 p-3 text-sm text-rose-800">{signOutError}</p>}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[var(--line)] bg-white/95 px-4 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[var(--line)] bg-white/95 px-4 backdrop-blur lg:hidden">
           <Brand />
           <button
             aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
@@ -89,7 +89,7 @@ export function AppShell({
           </button>
         </header>
         {menuOpen && (
-          <div className="fixed inset-x-0 top-16 z-20 border-b border-[var(--line)] bg-white p-4 shadow-lg lg:hidden">
+          <div className="fixed inset-x-0 top-20 z-20 border-b border-[var(--line)] bg-white p-4 shadow-lg lg:hidden">
             <nav className="space-y-1">
               {links.map(({ href, label, icon: Icon }) => (
                 <Link
@@ -115,8 +115,8 @@ export function AppShell({
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <Image src="/blablacamg-mark.webp" alt="" width={40} height={40} unoptimized className="rounded-xl" />
-      <span className="text-lg font-extrabold tracking-tight">
+      <Image src="/blablacamg-mark.webp" alt="" width={64} height={64} unoptimized className="shrink-0 rounded-xl" />
+      <span className="text-xl font-extrabold tracking-tight">
         Blabla<span className="text-emerald-700">CAMG</span>
       </span>
     </Link>
